@@ -70,6 +70,36 @@ curl -X POST "https://integrations-47232509.hubspotpagebuilder.com/_hcms/api/syn
 
 Project-based functions use `/hs/serverless/` instead; this repo uses Design Manager upload.
 
+## HubSpot workflow timer
+
+Use a **Scheduled workflow** (Operations Hub / Marketing Hub workflows with schedule trigger, depending on your account) to POST to the sync URL on a timer.
+
+The skill should give you this block after serverless deploy:
+
+| Setting | Value |
+|---------|--------|
+| Method | POST |
+| URL | `https://{cms-domain}/_hcms/api/sync-rss?portalid={portalId}` |
+| Headers | `Content-Type: application/json` |
+| Body | `{}` |
+
+### Setup steps (HubSpot UI)
+
+1. **Automation** → **Workflows** → create a **Scheduled** workflow (not contact-based if you only need a timer).
+2. Set schedule (e.g. daily at 8:00 AM).
+3. Add action **Send a webhook** or **Custom code / HTTP request** (name varies by hub tier):
+   - URL: your `/_hcms/api/sync-rss?portalid=...` endpoint
+   - Method: POST
+   - Content-Type: application/json
+4. Activate the workflow.
+
+### Notes
+
+- No auth header is required for the public CMS serverless endpoint; auth is via `HUBSPOT_PRIVATE_APP_TOKEN` secret inside the function.
+- Re-sync is idempotent: duplicate articles are skipped by `guid`.
+- If sync fails, check **Design Manager → serverless logs** or `hs cms function logs sync-rss`.
+- Alternative schedulers: GitHub Actions cron, Zapier, or any external cron hitting the same POST URL.
+
 ## Module HubL
 
 ```hubl

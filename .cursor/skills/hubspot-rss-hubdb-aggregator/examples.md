@@ -1,11 +1,24 @@
 # Example prompts
 
-## Bootstrap
+## Bootstrap (skill asks for feeds)
 
 ```
-Use the hubspot-rss-hubdb-aggregator skill. Set up the RSS aggregator from scratch
-in this workspace: HubDB tables, sync-rss serverless, and rss-feed-list module (HubL).
-Query docs with MCP before implementing.
+Use hubspot-rss-hubdb-aggregator from scratch. Ask me which RSS feeds to use before creating HubDB rows.
+After serverless deploy, share the POST URL so I can add a HubSpot workflow timer.
+```
+
+## Provide feeds when asked
+
+```
+Use these RSS sources:
+1. HubSpot Blog — https://blog.hubspot.com/marketing/rss.xml
+2. TechCrunch — https://techcrunch.com/feed/
+```
+
+## Workflow timer setup
+
+```
+I deployed sync-rss. Give me the full POST URL and steps to create a scheduled HubSpot workflow that calls it daily.
 ```
 
 ## Add a feed

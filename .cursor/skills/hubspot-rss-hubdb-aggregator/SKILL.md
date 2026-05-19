@@ -27,7 +27,38 @@ Call `search-docs` then `fetch-doc` for:
 
 Do not guess API shapes; use fetched docs.
 
-### 2. HubDB tables (CLI — not an MCP tool)
+### 2. RSS sources (ask the user — required)
+
+**Before creating or seeding `rss_feeds`, ask the user which RSS sources to use.**
+
+Use `AskQuestion` or a short conversational prompt. Collect for each feed:
+
+| Field | Required | Example |
+|-------|----------|---------|
+| `name` | yes | HubSpot Blog |
+| `feed_url` | yes | https://blog.hubspot.com/marketing/rss.xml |
+| `enabled` | default true | true |
+
+Rules:
+
+- Do **not** use demo feeds from `hubdb/rss_feeds.json` unless the user accepts defaults or skips.
+- If the user gives one URL without a name, derive a readable name from the domain.
+- Confirm the list back to the user before writing HubDB rows or updating `hubdb/rss_feeds.json`.
+- After confirmation, either:
+  - Update `hubdb/rss_feeds.json` `rows` and run `hs hubdb create` (new portal), or
+  - Add rows in HubDB UI / HubDB API for an existing table, then **Publish** `rss_feeds`.
+
+Example confirmation message:
+
+```
+Planned RSS sources:
+1. HubSpot Blog — https://blog.hubspot.com/marketing/rss.xml
+2. NASA Breaking News — https://www.nasa.gov/rss/dyn/breaking_news.rss
+
+Proceed with these feeds?
+```
+
+### 3. HubDB tables (CLI — not an MCP tool)
 
 **MCP does not create HubDB tables.** Use HubSpot CLI after `fetch-doc` on HubDB CLI commands:
 
@@ -38,7 +69,7 @@ hs hubdb create --path hubdb/rss_feeds.json
 hs hubdb create --path hubdb/rss_articles.json
 ```
 
-Source files: `hubdb/rss_feeds.json` (includes 2 demo feed rows), `hubdb/rss_articles.json` (empty).
+Source files: `hubdb/rss_feeds.json`, `hubdb/rss_articles.json`. Populate `rss_feeds.json` rows from **step 2** (user-confirmed sources), not hardcoded demos.
 
 | Table | Purpose |
 |-------|---------|
@@ -49,7 +80,7 @@ Column definitions: see [reference.md](reference.md). Legacy `*.schema.json` fil
 
 **Publish** both tables in HubSpot UI (Content > HubDB > Publish) so the live site and module see data.
 
-### 3. CMS serverless (MCP scaffold + code)
+### 4. CMS serverless (MCP scaffold + code)
 
 Call MCP `create-cms-function` with:
 
@@ -70,7 +101,25 @@ Implement logic in generated file (see `cms/sync-rss.functions/` in repo):
 
 **Do not** call `upload-project` unless the user explicitly requests deploy.
 
-### 4. CMS module (MCP scaffold + HubL)
+After upload/deploy, **always share the serverless sync URL** with the user in this format:
+
+```markdown
+## RSS sync endpoint (for manual curl or HubSpot workflow timer)
+
+**Method:** POST
+**URL:** https://{cms-domain}/_hcms/api/sync-rss?portalid={portalId}
+**Headers:** Content-Type: application/json
+**Body:** {} (empty JSON object is fine)
+
+Example curl:
+curl -X POST "https://{cms-domain}/_hcms/api/sync-rss?portalid={portalId}" \
+  -H "Content-Type: application/json"
+```
+
+Ask for **CMS domain** and **portal ID** if unknown (`hs account list`, or Settings → Account Defaults).  
+If the user wants scheduled sync, point them to [reference.md — HubSpot workflow timer](reference.md#hubspot-workflow-timer) and paste the URL above — do **not** create the workflow unless they ask.
+
+### 5. CMS module (MCP scaffold + HubL)
 
 Call MCP `create-cms-module` with:
 
@@ -82,10 +131,10 @@ Call MCP `create-cms-module` with:
 
 Edit `module.html` to use `hubdb_table_rows()` — see repo template.
 
-### 5. Validate (MVP)
+### 6. Validate (MVP)
 
-1. User adds feed rows in `rss_feeds` (enabled = true)
-2. `POST` to `https://{domain}/_hcms/api/sync-rss?portalid={hubId}` (Design Manager; projects use `/hs/serverless/`)
+1. Feeds exist in `rss_feeds` (from step 2) with `enabled = true`
+2. `POST` to the shared sync URL (step 4)
 3. Confirm rows in `rss_articles` (published)
 4. Add module to a landing page; preview
 
@@ -95,16 +144,19 @@ Debug failures: MCP `get-cms-serverless-function-logs`.
 
 | Rule | Action |
 |------|--------|
-| Names | Never invent `userSuppliedName`; ask user |
+| Names / feeds | Never invent `userSuppliedName` or RSS URLs; **ask user for feeds** |
+| Serverless URL | After deploy, **always output** POST URL + curl for workflow timer |
 | Upload/deploy | Ask before `upload-project` or `deploy-project` |
 | Docs | `search-docs` → `fetch-doc` before HubDB/serverless API work |
 | Paths | Pass full absolute paths to MCP tools |
 
-## Out of scope (MVP)
+## Out of scope (unless user asks)
 
-- Automatic cron (document manual POST or future GitHub Actions)
+- Creating the HubSpot workflow in the UI (skill provides URL + steps only)
 - React modules
 - CRM sync
+
+Scheduled sync is supported **via HubSpot workflow timer** calling the shared serverless URL (see reference.md).
 
 ## Repo layout
 

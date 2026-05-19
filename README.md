@@ -19,7 +19,7 @@ flowchart LR
 2. **sync-rss** (CMS serverless) fetches feeds, parses XML, and writes rows to **rss_articles** (dedupe by `guid`).
 3. **rss-feed-list** reads published HubDB rows via `hubdb_table_rows()` and renders them on a page.
 
-Sync is **manual** (POST to the serverless endpoint). There is no built-in cron in MVP.
+Sync is **manual** by default (POST to the serverless endpoint). Use a **HubSpot scheduled workflow** webhook to the same URL for automatic sync.
 
 ## MVP decisions
 
@@ -103,7 +103,19 @@ Re-run sync anytime. Existing articles are skipped by `guid` (`skipped` count in
 
 **Publish** `rss_articles` again if rows were written to draft.
 
-### 5. Landing page
+### 5. Scheduled sync (optional — HubSpot workflow)
+
+After deploy, the skill outputs a block like:
+
+```
+POST https://integrations-47232509.hubspotpagebuilder.com/_hcms/api/sync-rss?portalid=47232509
+Content-Type: application/json
+```
+
+Create a **Scheduled workflow** in HubSpot → add **Send webhook** (POST to that URL) → set daily/weekly timer.  
+Details: `.cursor/skills/hubspot-rss-hubdb-aggregator/reference.md` (HubSpot workflow timer).
+
+### 6. Landing page
 
 Add the **RSS Feed List** module (`table_name` = `rss_articles`) to a page and publish.
 
