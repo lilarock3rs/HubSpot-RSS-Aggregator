@@ -1,27 +1,45 @@
 # Lab 10 — HubSpot RSS Aggregator (Skill + MCP)
 
-Repositorio: https://github.com/lilarock3rs/Lab10-HubSpot-RSS-Aggregator
+Repository: https://github.com/lilarock3rs/Lab10-HubSpot-RSS-Aggregator
 
-Agregador RSS → HubDB → módulo CMS HubL, orquestado por la skill `hubspot-rss-hubdb-aggregator` y MCP **HubSpotDev**.
+RSS → HubDB → HubL CMS module, orchestrated by the `hubspot-rss-hubdb-aggregator` skill and **HubSpotDev** MCP.
 
-## Decisiones (MVP)
+## How it works
 
-- Módulo: **HubL**
-- Alcance: **2 feeds demo**, sync **manual** (POST al serverless)
-- HubDB: **`hs hubdb create`** (no hay tool MCP para tablas)
+```mermaid
+flowchart LR
+    Feeds[rss_feeds HubDB] --> Sync[sync-rss serverless]
+    Sync --> RSS[External RSS feeds]
+    Sync --> Articles[rss_articles HubDB]
+    Articles --> Module[rss-feed-list HubL module]
+    Module --> Page[CMS landing page]
+```
 
-## Prerrequisitos
+1. **rss_feeds** stores RSS source URLs (`enabled = true` to sync).
+2. **sync-rss** (CMS serverless) fetches feeds, parses XML, and writes rows to **rss_articles** (dedupe by `guid`).
+3. **rss-feed-list** reads published HubDB rows via `hubdb_table_rows()` and renders them on a page.
 
-1. `npm install -g @hubspot/cli` y `hs auth`
-2. MCP HubSpotDev en Cursor (`hs mcp setup --client cursor`)
-3. Portal con **CMS + HubDB** (cuenta `integrations-mvp` en este repo)
+Sync is **manual** (POST to the serverless endpoint). There is no built-in cron in MVP.
 
-## Estructura
+## MVP decisions
+
+- Module: **HubL**
+- Scope: **2 demo feeds**, **manual** sync (POST to serverless)
+- HubDB: **`hs hubdb create`** (no MCP tool for tables)
+- Design Manager serverless URL: **`/_hcms/api/sync-rss`** (not `/hs/serverless/`)
+
+## Prerequisites
+
+1. `npm install -g @hubspot/cli` and `hs auth`
+2. HubSpotDev MCP in Cursor (`hs mcp setup --client cursor`)
+3. HubSpot portal with **CMS + HubDB** (this repo uses account `integrations-mvp`)
+
+## Project structure
 
 ```
 .cursor/skills/hubspot-rss-hubdb-aggregator/
-hubdb/rss_feeds.json          # CLI: crear tabla + 2 feeds demo
-hubdb/rss_articles.json       # CLI: crear tabla vacía
+hubdb/rss_feeds.json          # CLI: create table + 2 demo feed rows
+hubdb/rss_articles.json       # CLI: create empty articles table
 cms/sync-rss.functions/
 cms/rss-feed-list.module/
 scripts/create-hubdb-tables.sh
@@ -29,80 +47,97 @@ scripts/create-hubdb-tables.sh
 
 ## Setup
 
-### 1. Crear tablas HubDB (CLI)
+### 1. Create HubDB tables (CLI)
 
 ```bash
-cd /Users/lilarock3rs/Documents/Lab10_CrearSkillAndMCP
+cd /path/to/Lab10-HubSpot-RSS-Aggregator
 ./scripts/create-hubdb-tables.sh
 ```
 
-Tablas creadas en portal `47232509`:
+Tables in portal `47232509`:
 
 | Name | Table ID |
 |------|----------|
 | rss_feeds | 294548351 |
 | rss_articles | 294681971 |
 
-**Publicar** en [HubDB](https://app.hubspot.com/hubdb/47232509): abre cada tabla → **Publish**.
+**Publish** in [HubDB](https://app.hubspot.com/hubdb/47232509): open each table → **Publish**.
 
-### 2. Secret para serverless
+### 2. Serverless secret
 
-Private App con scopes HubDB read/write. Luego:
+Create a Private App with the **`hubdb`** scope, then:
 
 ```bash
 hs secrets add HUBSPOT_PRIVATE_APP_TOKEN
 ```
 
-### 3. Subir CMS
+### 3. Upload CMS assets
 
-Ruta en Design Manager: `rss-aggregator/`
+Design Manager path: `rss-aggregator/`
 
 ```bash
 hs cms upload cms/rss-feed-list.module rss-aggregator/modules/rss-feed-list.module
 hs cms upload cms/sync-rss.functions rss-aggregator/sync-rss.functions
 ```
 
-### 4. Sincronizar RSS
+### 4. Sync RSS
 
-Dominio CMS de este portal:
+CMS domain for this portal:
 
 `https://integrations-47232509.hubspotpagebuilder.com`
 
-Design Manager usa `/_hcms/api/` (no `/hs/serverless/`):
+Design Manager serverless uses `/_hcms/api/`:
 
 ```bash
 curl -X POST "https://integrations-47232509.hubspotpagebuilder.com/_hcms/api/sync-rss?portalid=47232509" \
   -H "Content-Type: application/json"
 ```
 
-Vuelve a **publicar** `rss_articles` si el sync escribe en draft.
+Example response:
 
-### 5. Landing
+```json
+{"ok":true,"feedsProcessed":2,"created":30,"skipped":0}
+```
 
-Añade el módulo **RSS Feed List** (`table_name` = `rss_articles`) a una página.
+Re-run sync anytime. Existing articles are skipped by `guid` (`skipped` count increases).
+
+**Publish** `rss_articles` again if rows were written to draft.
+
+### 5. Landing page
+
+Add the **RSS Feed List** module (`table_name` = `rss_articles`) to a page and publish.
 
 ## MCP vs CLI
 
-| Tarea | Herramienta |
-|-------|-------------|
-| Docs HubDB/serverless | MCP `search-docs` + `fetch-doc` |
-| Crear tablas HubDB | **`hs hubdb create`** |
-| Módulo + serverless | MCP `create-cms-module`, `create-cms-function` (o archivos en `cms/`) |
-| Filas RSS tras sync | Serverless `sync-rss` → HubDB API |
+| Task | Tool |
+|------|------|
+| HubDB / serverless docs | MCP `search-docs` + `fetch-doc` |
+| Create HubDB tables | **`hs hubdb create`** |
+| Module + serverless | MCP `create-cms-module`, `create-cms-function` (or files in `cms/`) |
+| RSS rows after sync | Serverless `sync-rss` → HubDB API |
 
 ## Skill
 
 ```
-Usa hubspot-rss-hubdb-aggregator y crea las tablas HubDB con el CLI.
+Use hubspot-rss-hubdb-aggregator and set up the RSS aggregator from scratch in this workspace.
 ```
 
-Ver `.cursor/skills/hubspot-rss-hubdb-aggregator/examples.md`.
+See `.cursor/skills/hubspot-rss-hubdb-aggregator/examples.md`.
 
-## Checklist lab
+## Troubleshooting
 
-- [x] Skill en `.cursor/skills/`
-- [x] Tablas HubDB creadas (`rss_feeds`, `rss_articles`)
-- [x] Serverless desplegado + secret configurado
-- [x] Sync manual OK
-- [x] Código en GitHub
-- [ ] Módulo en landing publicada (UI HubSpot)
+| Issue | Fix |
+|-------|-----|
+| 404 on sync URL | Use `/_hcms/api/sync-rss`, not `/hs/serverless/sync-rss` |
+| 500 "credentials missing" | Add `HUBSPOT_PRIVATE_APP_TOKEN` secret; ensure Private App has `hubdb` scope |
+| Module shows no articles | Publish `rss_articles` in HubDB UI |
+| Duplicate articles on re-sync | Expected — dedupe by `guid` should increase `skipped` |
+
+## Lab checklist
+
+- [x] Skill in `.cursor/skills/`
+- [x] HubDB tables created (`rss_feeds`, `rss_articles`)
+- [x] Serverless deployed + secret configured
+- [x] Manual sync OK
+- [x] Code on GitHub
+- [ ] Module on published landing page (HubSpot UI)

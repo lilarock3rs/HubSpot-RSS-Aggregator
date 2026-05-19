@@ -3,32 +3,32 @@
 ## Bootstrap
 
 ```
-Usa la skill hubspot-rss-hubdb-aggregator. Configura el agregador RSS desde cero
-en este workspace: tablas HubDB, serverless sync-rss y módulo rss-feed-list (HubL).
-Consulta la doc con MCP antes de implementar.
+Use the hubspot-rss-hubdb-aggregator skill. Set up the RSS aggregator from scratch
+in this workspace: HubDB tables, sync-rss serverless, and rss-feed-list module (HubL).
+Query docs with MCP before implementing.
 ```
 
 ## Add a feed
 
 ```
-Añade el feed https://example.com/rss.xml a rss_feeds (nombre: Example Blog)
-y dime cómo ejecutar sync-rss.
+Add the feed https://example.com/rss.xml to rss_feeds (name: Example Blog)
+and tell me how to run sync-rss.
 ```
 
 ## Sync and verify
 
 ```
-Sincroniza los RSS activos. Si falla, revisa logs del serverless con MCP.
+Sync active RSS feeds. If it fails, check serverless logs with MCP.
 ```
 
 ## Module only
 
 ```
-Crea el módulo rss-feed-list para mostrar las últimas 10 noticias de rss_articles.
+Create the rss-feed-list module to show the latest 10 articles from rss_articles.
 ```
 
 ## Deploy (explicit)
 
 ```
-Sube el proyecto CMS a HubSpot (upload). Pide confirmación antes.
+Upload the CMS project to HubSpot. Ask for confirmation before running upload.
 ```

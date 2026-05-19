@@ -85,7 +85,7 @@ Edit `module.html` to use `hubdb_table_rows()` — see repo template.
 ### 5. Validate (MVP)
 
 1. User adds feed rows in `rss_feeds` (enabled = true)
-2. `POST` to `https://{domain}/hs/serverless/.../sync-rss`
+2. `POST` to `https://{domain}/_hcms/api/sync-rss?portalid={hubId}` (Design Manager; projects use `/hs/serverless/`)
 3. Confirm rows in `rss_articles` (published)
 4. Add module to a landing page; preview
 
