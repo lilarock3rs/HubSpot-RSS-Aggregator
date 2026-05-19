@@ -28,6 +28,27 @@ Sync is **manual** by default (POST to the serverless endpoint). Use a **HubSpot
 - HubDB: **`hs hubdb create`** (no MCP tool for tables)
 - Design Manager serverless URL: **`/_hcms/api/sync-rss`** (not `/hs/serverless/`)
 
+## HubSpot account (this lab)
+
+| Setting | Value |
+|---------|--------|
+| CLI account name | `integrations-mvp` |
+| Portal ID | `47232509` |
+| CMS domain | `https://integrations-47232509.hubspotpagebuilder.com` |
+| Design Manager path | `rss-aggregator/` |
+| HubDB | [Open HubDB](https://app.hubspot.com/hubdb/47232509) |
+| Sync endpoint | `POST .../_hcms/api/sync-rss?portalid=47232509` |
+
+Default CLI account is set in `hubspot.config.yml`. Override with:
+
+```bash
+export HS_ACCOUNT=integrations-mvp
+# or
+hs cms upload ... --account integrations-mvp
+```
+
+Other accounts on this machine: `app-object-mvp` (`50485080`).
+
 ## Prerequisites
 
 1. `npm install -g @hubspot/cli` and `hs auth`

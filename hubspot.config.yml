@@ -1,1 +1,6 @@
+# Default HubSpot CLI account for this project
 defaultPortal: integrations-mvp
+
+# Account: integrations-mvp [test account]
+# Portal ID: 47232509
+# CMS domain: https://integrations-47232509.hubspotpagebuilder.com
