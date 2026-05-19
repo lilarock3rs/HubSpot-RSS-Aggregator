@@ -1,6 +1,6 @@
-# Lab 10 — HubSpot RSS Aggregator (Skill + MCP)
+# HubSpot RSS Aggregator (Skill + MCP)
 
-Repository: https://github.com/lilarock3rs/Lab10-HubSpot-RSS-Aggregator
+Repository: https://github.com/lilarock3rs/HubSpot-RSS-Aggregator
 
 RSS → HubDB → HubL CMS module, orchestrated by the `hubspot-rss-hubdb-aggregator` skill and **HubSpotDev** MCP.
 
@@ -71,7 +71,7 @@ scripts/create-hubdb-tables.sh
 ### 1. Create HubDB tables (CLI)
 
 ```bash
-cd /path/to/Lab10-HubSpot-RSS-Aggregator
+cd /path/to/HubSpot-RSS-Aggregator
 ./scripts/create-hubdb-tables.sh
 ```
 
